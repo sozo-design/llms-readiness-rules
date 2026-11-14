@@ -119,6 +119,23 @@ foreach ($checks as $i => $check) {
     if (!is_array($params) || ($params !== [] && array_is_list($params)) || strlen((string)json_encode($params)) > 8192) {
         $error("Check $name: params must be an object of at most 8 KB.");
     }
+    // Same rule as the module's RuleSetParser::PATH_PATTERN: paths on the shop only ("/path"), never a URL.
+    $paths = [];
+    if (($check['type'] ?? '') === 'sitemap' && is_array($params) && array_key_exists('paths', $params)) {
+        $paths = is_array($params['paths']) ? $params['paths'] : [null];
+    }
+    if (($check['type'] ?? '') === 'trust_pages' && is_array($params) && is_array($params['pages'] ?? null)) {
+        foreach ($params['pages'] as $page) {
+            if (is_array($page) && array_key_exists('fallback', $page)) {
+                $paths[] = $page['fallback'];
+            }
+        }
+    }
+    foreach ($paths as $path) {
+        if (!is_string($path) || !preg_match('#^/(?![/\\\\])[^\x00-\x20\x7f\\\\]{0,199}\z#', $path)) {
+            $error("Check $name: paths must start with a single \"/\" and have no spaces or control characters.");
+        }
+    }
     $learn = $check['learn_more'] ?? '';
     if ($learn !== '' && (!is_string($learn) || strlen($learn) > 300 || !preg_match('#^https://[a-z0-9.-]+(/[^\s"<>]*)?$#i', $learn))) {
         $error("Check $name: learn_more must be an https URL.");
