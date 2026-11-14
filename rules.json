@@ -1,0 +1,248 @@
+{
+    "schema": 1,
+    "revision": 1,
+    "published": "2026-11-13",
+    "groups": [
+        {
+            "id": "find",
+            "label": "Find",
+            "description": "Can AI search tools and assistants reach the shop and find their way round it?"
+        },
+        {
+            "id": "read",
+            "label": "Read",
+            "description": "Is the content quick to read without a browser: a short llms.txt, real text in the HTML, honest error pages?"
+        },
+        {
+            "id": "understand",
+            "label": "Understand",
+            "description": "Does the shop describe itself in a form machines can parse: metadata and structured data?"
+        },
+        {
+            "id": "trust",
+            "label": "Trust",
+            "description": "Can an AI agent confirm the business is real, and does the shop let agents in?"
+        }
+    ],
+    "checks": [
+        {
+            "id": "homepage_loads",
+            "group": "find",
+            "type": "homepage_loads",
+            "title": "Home page loads",
+            "weight": 2,
+            "description": "Every AI tool starts at the home page. If it doesn't load for them, nothing else is read.",
+            "fix": "Make sure the store view's secure base URL answers 200 with HTML. On a dev or staging site, basic authentication or a maintenance page will fail this check."
+        },
+        {
+            "id": "robots_txt",
+            "group": "find",
+            "type": "robots_txt",
+            "title": "robots.txt",
+            "weight": 1,
+            "description": "Crawlers read robots.txt before anything else. If it errors, they treat the whole site as off limits; it is also where they find the sitemap.",
+            "fix": "In Magento, edit it under Content > Design > Configuration > (store view) > Search Engine Robots. Serve it as text/plain and add a line such as \"Sitemap: https://www.example.com/sitemap.xml\".",
+            "learn_more": "https://www.rfc-editor.org/rfc/rfc9309"
+        },
+        {
+            "id": "robots_ai_search",
+            "group": "find",
+            "type": "robots_user_agents",
+            "title": "AI search crawlers allowed",
+            "weight": 2,
+            "params": {
+                "user_agents": ["OAI-SearchBot", "Claude-SearchBot", "PerplexityBot"],
+                "paths": ["/", "/llms.txt"]
+            },
+            "description": "These crawlers build the indexes that ChatGPT search, Claude and Perplexity answer from. If robots.txt blocks them, the shop can't be found or cited in AI search.",
+            "fix": "In robots.txt, don't disallow \"/\" for these crawlers (or for \"*\" without allowing them by name). Keep the checkout, customer account and search result pages disallowed. A dev or staging site should keep blocking everything."
+        },
+        {
+            "id": "robots_ai_assistants",
+            "group": "find",
+            "type": "robots_user_agents",
+            "title": "AI assistants allowed",
+            "weight": 1,
+            "params": {
+                "user_agents": ["ChatGPT-User", "Claude-User", "Perplexity-User"],
+                "paths": ["/", "/llms.txt"]
+            },
+            "description": "These agents fetch a page when a person asks an assistant about it, for example to compare products. Blocking them stops the assistant from answering about the shop.",
+            "fix": "Allow these user agents in robots.txt for the public pages, as for the AI search crawlers."
+        },
+        {
+            "id": "robots_ai_training",
+            "group": "find",
+            "type": "robots_user_agents",
+            "title": "AI training crawlers",
+            "scored": false,
+            "weight": 0,
+            "params": {
+                "user_agents": ["GPTBot", "ClaudeBot", "Google-Extended", "CCBot"],
+                "paths": ["/"]
+            },
+            "description": "These collect content to train AI models. Whether to allow them is the shop's choice and doesn't affect the score.",
+            "fix": "No action needed. To opt out of training, disallow these user agents in robots.txt; search and assistant access is unaffected."
+        },
+        {
+            "id": "sitemap",
+            "group": "find",
+            "type": "sitemap",
+            "title": "XML sitemap",
+            "weight": 1,
+            "params": {
+                "paths": ["/sitemap.xml", "/pub/sitemap.xml"]
+            },
+            "description": "A sitemap lists every page worth reading, with when it last changed.",
+            "fix": "In Magento, generate one under Marketing > SEO & Search > Site Map, schedule it under Stores > Configuration > Catalog > XML Sitemap, and name it in robots.txt with a Sitemap: line."
+        },
+        {
+            "id": "llms_txt",
+            "group": "find",
+            "type": "llms_txt_exists",
+            "title": "llms.txt published",
+            "weight": 2,
+            "params": {
+                "min_characters": 100
+            },
+            "description": "llms.txt is a short Markdown guide to the site written for AI tools: what the business is, with links to its key pages.",
+            "fix": "Switch it on under Stores > Configuration > SOZO Design > llms.txt > General, fill in the Introduction, and press Generate llms.txt now.",
+            "learn_more": "https://llmstxt.org/"
+        },
+        {
+            "id": "llms_txt_length",
+            "group": "read",
+            "type": "llms_txt_length",
+            "title": "llms.txt is a short index",
+            "weight": 1,
+            "params": {
+                "target": 30000,
+                "max": 100000
+            },
+            "description": "llms.txt should be a navigation index of at most about 30,000 characters. AI agents stop reading at about 100,000, so anything after that is never seen.",
+            "fix": "The module keeps llms.txt under 30,000 characters and puts the rest in /llms-full.txt. If this still fails, shorten Details and When to Use This Site, or lower Category Levels."
+        },
+        {
+            "id": "llms_txt_links",
+            "group": "read",
+            "type": "llms_txt_links",
+            "title": "llms.txt links work",
+            "weight": 1,
+            "params": {
+                "sample": 5
+            },
+            "description": "A link that doesn't load wastes an agent's time and makes the file look unreliable.",
+            "fix": "Regenerate llms.txt after changing URLs. Check the failing pages are enabled for this store view and not behind a login."
+        },
+        {
+            "id": "llms_when_to_use",
+            "group": "read",
+            "type": "llms_txt_section",
+            "title": "Guidance on when to use the shop",
+            "weight": 1,
+            "params": {
+                "phrases": ["when to use"],
+                "min_characters": 40
+            },
+            "description": "Agents choose sources by fit. A short, specific \"when to use this site\" section tells them which questions the shop is the right answer for.",
+            "fix": "Fill in When to Use This Site under Stores > Configuration > SOZO Design > llms.txt > Introduction, for example: \"Use this shop when someone wants to buy, compare or get advice on ...\". Then generate llms.txt again."
+        },
+        {
+            "id": "content_without_js",
+            "group": "read",
+            "type": "content_without_js",
+            "title": "Content without JavaScript",
+            "weight": 1,
+            "params": {
+                "min_characters": 500,
+                "require_h1": true
+            },
+            "description": "Most AI crawlers don't run JavaScript. The home page's main text and one clear <h1> heading must be in the HTML itself.",
+            "fix": "Make sure the home page content is in a CMS page or block rendered on the server, not loaded by JavaScript (for example from a page builder widget or slider only), and that the theme outputs one <h1>."
+        },
+        {
+            "id": "not_found",
+            "group": "read",
+            "type": "not_found",
+            "title": "Missing pages return 404",
+            "weight": 0.5,
+            "description": "If a missing page answers 200, an agent can't tell an error page from real content.",
+            "fix": "Magento answers 404 by default. If this fails, check custom routers or redirect modules that send unknown URLs to the home page with a 200."
+        },
+        {
+            "id": "metadata",
+            "group": "understand",
+            "type": "html_metadata",
+            "title": "Page metadata",
+            "weight": 1,
+            "params": {
+                "items": ["canonical", "lang", "description", "og:image", "og:type"]
+            },
+            "description": "A canonical link, the page language, a meta description and Open Graph tags tell agents which URL to cite, in which language, and how to show it.",
+            "fix": "Turn on canonical links under Stores > Configuration > Catalog > Catalog > Search Engine Optimization, set the home page's Meta Description on its CMS page, and make sure the theme outputs <html lang> and Open Graph tags (og:image, og:type)."
+        },
+        {
+            "id": "json_ld",
+            "group": "understand",
+            "type": "json_ld_types",
+            "title": "Structured data (JSON-LD)",
+            "weight": 1,
+            "params": {
+                "types": ["Organization", "LocalBusiness", "Store", "OnlineStore", "Corporation"]
+            },
+            "description": "JSON-LD lets an agent read who the business is without guessing from the page layout.",
+            "fix": "Add schema.org Organization (or Store / OnlineStore) JSON-LD to the home page, with name, url and logo. Many SEO modules can output it; check it with the Schema.org validator.",
+            "learn_more": "https://validator.schema.org/"
+        },
+        {
+            "id": "organization_details",
+            "group": "understand",
+            "type": "json_ld_properties",
+            "title": "Business contact details",
+            "weight": 1,
+            "params": {
+                "types": ["Organization", "LocalBusiness", "Store", "OnlineStore", "Corporation"],
+                "groups": [
+                    {"label": "Contact details", "any": ["contactPoint", "telephone", "email"]},
+                    {"label": "Address", "any": ["address"]},
+                    {"label": "Profiles and listings", "any": ["sameAs"]}
+                ]
+            },
+            "description": "Contact details, an address and links to the business's profiles (sameAs) let an agent confirm it is real and tell it apart from businesses with similar names.",
+            "fix": "Add contactPoint (or telephone and email), address (a PostalAddress) and sameAs (links to social profiles and listings) to the Organization JSON-LD."
+        },
+        {
+            "id": "trust_pages",
+            "group": "trust",
+            "type": "trust_pages",
+            "title": "About, contact and privacy pages",
+            "weight": 1,
+            "params": {
+                "min_characters": 500,
+                "pages": [
+                    {"label": "About", "keywords": ["about"], "fallback": "/about-us"},
+                    {"label": "Contact", "keywords": ["contact"], "fallback": "/contact"},
+                    {"label": "Privacy", "keywords": ["privacy"], "fallback": "/privacy-policy-cookie-restriction-mode"}
+                ]
+            },
+            "description": "Agents look for these pages before recommending a business. Each should be linked from the home page and have real content.",
+            "fix": "Link the About, Contact and Privacy pages from the footer, and give each at least a few paragraphs. Make sure they are listed in llms.txt."
+        },
+        {
+            "id": "bot_access",
+            "group": "trust",
+            "type": "bot_access",
+            "title": "AI agents not blocked",
+            "weight": 1,
+            "params": {
+                "user_agents": [
+                    {"name": "ChatGPT-User", "value": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot"},
+                    {"name": "Claude-User", "value": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-User/1.0; +Claude-User@anthropic.com)"},
+                    {"name": "PerplexityBot", "value": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)"}
+                ]
+            },
+            "description": "A firewall or bot rule that blocks AI agents stops them even when robots.txt allows them. This asks for the home page with each agent's User-Agent, from this server.",
+            "fix": "In Cloudflare (or the server firewall), allow verified AI search and assistant bots rather than blocking by User-Agent. This test comes from the shop's own server, so a firewall that checks the bots' real IP addresses may treat the real agents differently."
+        }
+    ]
+}

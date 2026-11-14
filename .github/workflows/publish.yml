@@ -1,0 +1,54 @@
+# Publishes rules.json and its Ed25519 signature to GitHub Pages, where every Sozo_LlmsGenerator site reads them
+# once a day. The secret key is the repository secret RULES_SIGNING_KEY; the module only accepts files signed with
+# the key whose public half is in public-key.txt (and in the module's RulesSignature class).
+name: Publish rules
+
+on:
+  push:
+    branches: [main]
+    paths: [rules.json, public-key.txt, scripts/**, .github/workflows/publish.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate rules.json
+        run: php scripts/validate.php rules.json
+      - name: Sign rules.json
+        env:
+          RULES_SIGNING_KEY: ${{ secrets.RULES_SIGNING_KEY }}
+        run: |
+          mkdir -p site
+          cp rules.json site/rules.json
+          php scripts/sign.php site/rules.json site/rules.json.sig
+          cp public-key.txt site/public-key.txt
+          printf 'SOZO llms.txt readiness rules: rules.json, rules.json.sig\n' > site/index.txt
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

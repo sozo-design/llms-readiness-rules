@@ -1,0 +1,5 @@
+/site/
+*.sig
+# The Ed25519 secret key, kept here only until it is in LastPass. Never commit it.
+/RULES_SIGNING_KEY.secret
+*.secret
