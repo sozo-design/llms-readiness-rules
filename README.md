@@ -13,16 +13,19 @@ without credentials.
 - The module ships with a copy of these rules and uses it until it downloads newer ones.
 - A download is used only when **its Ed25519 signature is valid** (`rules.json.sig`, made by the publish workflow
   with SOZO's secret key, checked against the public key built into the module) and its `revision` is not lower
-  than the rules the site already has. A file with a newer revision bundled in a module release wins over an older
-  download.
+  than the rules the site already has. A file with the **same** revision as the site's copy but different content
+  is refused too (module v400.0.0 and later). A file with a newer revision bundled in a module
+  release wins over an older download.
 - Rules are data, never code: each check names a **check type** built into the module and gives its settings,
   wording and weight. A rule with a type the site's module version doesn't know shows as "needs a module update"
   and isn't scored.
 
 ## Changing the rules
 
-1. Branch, edit `rules.json`, and **raise `revision` by one** (sites ignore an equal or lower revision). Set
-   `published` to today's date.
+1. Branch, edit `rules.json`, and **raise `revision` by one** (sites ignore a lower revision and refuse an equal
+   one with different content). This includes fixes to rules already published, even a typo: a corrected file
+   published under the same revision is never used by sites that already downloaded it. Set `published` to
+   today's date.
 2. Run `php scripts/validate.php rules.json` (PHP 8.1+). The pull request runs the same check against the
    published revision.
 3. Merge to `main`. **Publish rules** validates, signs and deploys to GitHub Pages; sites pick it up within a day
@@ -68,7 +71,7 @@ release is out.
 | `homepage_loads` | The home page answers 200 with HTML | |
 | `robots_txt` | robots.txt loads, as text, with a Sitemap: line | |
 | `robots_user_agents` | robots.txt lets the crawlers read the paths (RFC 9309) | `user_agents`, `paths` |
-| `sitemap` | An XML sitemap loads (from robots.txt, else the paths) | `paths` |
+| `sitemap` | An XML sitemap loads (from robots.txt, else the paths) | `paths` (each `/path` on the shop) |
 | `llms_txt_exists` | /llms.txt is text, starts with "# ", has content | `min_characters` |
 | `llms_txt_length` | llms.txt is a short index with Markdown links | `target`, `max` |
 | `llms_txt_links` | A sample of llms.txt's links on the shop load | `sample` |
@@ -77,7 +80,7 @@ release is out.
 | `html_metadata` | canonical, lang, and meta names/properties | `items` |
 | `json_ld_types` | JSON-LD with one of the schema.org types | `types` |
 | `json_ld_properties` | The business's JSON-LD has the property groups | `types`, `groups` (`label`, `any`) |
-| `trust_pages` | Pages linked from the home page with real content | `pages` (`label`, `keywords`, `fallback`), `min_characters` |
+| `trust_pages` | Pages linked from the home page with real content | `pages` (`label`, `keywords`, `fallback` as a `/path`), `min_characters` |
 | `bot_access` | The home page loads with each User-Agent | `user_agents` (`name`, `value`) |
 | `not_found` | A missing page answers 404 or 410 | |
 
