@@ -1,6 +1,7 @@
 # Publishes rules.json and its Ed25519 signature to GitHub Pages, where every Sozo_LlmsGenerator site reads them
-# once a day. The secret key is the repository secret RULES_SIGNING_KEY; the module only accepts files signed with
-# the key whose public half is in public-key.txt (and in the module's RulesSignature class).
+# once a day. The secret key is RULES_SIGNING_KEY, a secret of the github-pages environment (deployments from main
+# only), so only the build job below can read it; the module only accepts files signed with the key whose public
+# half is in public-key.txt (and in the module's RulesSignature class).
 name: Publish rules
 
 on:
@@ -20,6 +21,8 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    # The signing key is an environment secret: only jobs in this environment, on main, can read it.
+    environment: github-pages
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

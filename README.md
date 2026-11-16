@@ -86,7 +86,9 @@ release is out.
 
 ## Signing key
 
-- The secret key is the Actions secret `RULES_SIGNING_KEY` (base64, 64 bytes). It is never committed.
+- The secret key is `RULES_SIGNING_KEY` (base64, 64 bytes), a secret of the `github-pages` environment, which
+  only deploys from `main`. Only the publish workflow's build job can read it. It is never committed, and a backup
+  is kept outside GitHub.
 - `public-key.txt` holds the public half; the module has the same key in `Model/Readiness/RulesSignature.php`.
 - To change the key: add the new public key to the module, release it and wait for sites to update, then change
   the secret and `public-key.txt`. The publish workflow refuses a secret that doesn't match `public-key.txt`.
@@ -94,6 +96,9 @@ release is out.
 ## One-time setup (done once by an admin)
 
 1. Settings › Pages › Source: **GitHub Actions**.
-2. Settings › Secrets and variables › Actions: add `RULES_SIGNING_KEY`.
-3. Run **Publish rules** once (Actions tab), then open
+2. Settings › Environments › `github-pages`: deployment branches limited to `main`, and add the environment
+   secret `RULES_SIGNING_KEY` (not a repository secret).
+3. Settings › Rules › Rulesets: **Protect main** (no deletion, no force-push, changes by pull request only, the
+   **Check rules** `check` job must pass, nobody bypasses it).
+4. Run **Publish rules** once (Actions tab), then open
    <https://sozo-design.github.io/llms-readiness-rules/rules.json>.
