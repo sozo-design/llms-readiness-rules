@@ -137,7 +137,7 @@ foreach ($checks as $i => $check) {
         }
     }
     $learn = $check['learn_more'] ?? '';
-    if ($learn !== '' && (!is_string($learn) || strlen($learn) > 300 || !preg_match('#^https://[a-z0-9.-]+(/[^\s"<>]*)?$#i', $learn))) {
+    if ($learn !== '' && (!is_string($learn) || strlen($learn) > 300 || !preg_match('#^https://[a-z0-9.-]+(/[^\s"<>]*)?\z#i', $learn))) {
         $error("Check $name: learn_more must be an https URL.");
     }
 }
